@@ -16,8 +16,10 @@ Try running a processor:
 cd hcalanalysis/example # Note: you should be in hcalanalysis/hcalanalysis
 python ../run_processor.py testprocessor.TestProcessor \
    -y inputfiles.yaml \
-   -o test.coffea
+   -o test.coffea \
+   -w 4
 ```
+(Or you can just `source local.sh`.)
 
 In another terminal session, launch a notebook server:
 ```
@@ -29,7 +31,7 @@ In a third terminal, create an SSH tunnel for the notebooks:
 ```
 ssh -N -L localhost:someNumberBiggerThan1024:localhost:someNumberBiggerThan1024 username@lxplusN.cern.ch
 ```
-where `lxplusN` is the lxplus node running the notebook server. In your browser, navigate to the URL specified by the notebook server. Open `hcalanalysis/example/plots.ipynb`, and run the notebook.
+where `lxplusN` is the lxplus node running the notebook server. In your browser, navigate to the URL specified by the notebook server. Open `hcalanalysis/example/Plots.ipynb`, and run the notebook.
 
 ### Batch processing
 As usual, any significant processing should be done on condor. See `hcalanalysis/example/condor.sh` for an example. 
