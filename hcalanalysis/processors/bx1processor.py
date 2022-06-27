@@ -58,7 +58,14 @@ class BX1Processor(processor.ProcessorABC):
                 hist.axis.Variable(eventq_bins, name="eventq", label="Event total charge [fC]"), 
                 hist.axis.Variable(nhits_bins, name="nhits", label="Number of hits >60fC")
             ), 
-            'nevents': processor.defaultdict_accumulator(int),
+            'avgq': hist.Hist(
+                self._axis_bx,
+                self._axis_subdet,
+                hist.axis.Variable(10**np.linspace(0, 6, num=100, endpoint=True), name="avgq", label=r"Average $q_{ch}^{>60}$ [fC]"), 
+                hist.axis.Variable(nhits_bins, name="nhits", label="Number of hits >60fC")), 
+            "bad_events":  processor.list_accumulator([]), 
+            "full_events": processor.list_accumulator([]),
+
         }
 
     def process(self, events):
@@ -89,51 +96,7 @@ class BX1Processor(processor.ProcessorABC):
             digi_event = events.event * ak.ones_like(validdigis.ieta)
             digi_bx = events.bunchCrossing * ak.ones_like(validdigis.ieta)
             digi_is_bx1 = (digi_bx==1)
-            
-            # Find a few problem events
-            #highq_eventmask = ak.to_list((nhits > 4e2) & (eventq > 5.e4))
-            #print("highq_eventmask:")
-            #print(highq_eventmask)
-            #print(type(highq_eventmask))
-            ##print("highq_eventmask count:")
-            ##print(ak.count_nonzero(highq_eventmask))
-            ##print("Bad nhits:")
-            ##print(nhits[highq_eventmask])
-            ##print("Bad eventq:")
-            ##print(eventq[highq_eventmask])
-            ##maxevts = 0
-            ##truecount = 0
-            #highq_events = []
-            #for i in range(len(highq_eventmask)):
-            #    if highq_eventmask[i]:
-            #        highq_events.append(i)
-            #highq_evnets = np.random.choice(highq_events, size=3, replace=False)
-
-            #        truecount += 1
-            #        #print(f"High charge event {events.event[i]}")
-            #        #print("HLT:")
-            #        for trigger in events["HLT"].fields:
-            #            if events["HLT"][trigger][i]:
-            #                #print(trigger)
-            #                pass
-            #    if truecount >= maxevts+1:
-            #        highq_eventmask[i] = False
-
-            #print(ak.count(highq_eventmask))
-            # ADC per event, for looking at pulse shapes
-            
-            #for ts in range(8):  
-            #    output["adc_evt"].fill(
-            #        evt = ak.flatten(digi_event[highq_eventmask]),
-            #        is_bx1 = ak.flatten(digi_is_bx1[highq_eventmask]),
-            #        ts = ts,
-            #        subdet = subdet,
-            #        ieta = ak.flatten(validdigis.ieta[highq_eventmask]), 
-            #        iphi = ak.flatten(validdigis.iphi[highq_eventmask]), 
-            #        depth = ak.flatten(validdigis.depth[highq_eventmask]), 
-            #        weight = ak.flatten(validdigis[f"adc{ts}"][highq_eventmask]), 
-            #    )
-            
+                        
             # Event total charge vs nHits
             output["eventq"].fill(
                 bx = events.bunchCrossing, 
@@ -141,7 +104,20 @@ class BX1Processor(processor.ProcessorABC):
                 eventq = eventq, 
                 nhits = nhits
             )
-            
+
+            # Avg channel change vs nHits
+            output["avgq"].fill(
+                bx = events.bunchCrossing, 
+                subdet = subdet, 
+                avgq = eventq / nhits, 
+                nhits = nhits
+            )
+
+            # Bad event lists
+            highq_events = events.event[(nhits > 400) & (eventq > 5.e4)]
+            full_events = events.event[(nhits > 9000)]
+            output["bad_events"].extend(highq_events)
+            output["full_events"].extend(full_events)
         
         return processor.accumulate([{events.metadata["dataset"]: output}])
 

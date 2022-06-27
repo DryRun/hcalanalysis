@@ -1,23 +1,31 @@
 import os
 import sys
 import time
+import re
+import yaml
 from hcalanalysis.processors import *
 from pprint import pprint
 from coffea import processor, util
+
+# Workaround for https://github.com/scikit-hep/uproot4/issues/122
+import uproot
+uproot.open.defaults["xrootd_handler"] = uproot.source.xrootd.MultithreadedXRootDSource
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Run processor ")
     parser.add_argument(dest="processor_name", type=str, help="Name of processor, i.e. bx1processor.BX1Processor")
     parser.add_argument("-q", "--quicktest", action="store_true", help="Run a quick test")
-    parser.add_argument("-i", "--inputfiles", type=str, help="List of input files (comma-separated)")
-    parser.add_argument("-I", "--inputfilestxt", type=str, help="")
+    input_group = parser.add_mutually_exclusive_group(required=True)
+    input_group.add_argument("-i", "--inputfiles", type=str, help="List of input files (comma-separated)")
+    input_group.add_argument("-I", "--inputfilestxt", type=str, help="")
+    input_group.add_argument("-y", "--inputfilesyaml", type=str, help="")
     parser.add_argument("-o", "--outputfile", type=str, required=True, help="Output file")
     parser.add_argument("-f", "--force", action="store_true", help="Overwrite output file")
     parser.add_argument("-d", "--dataset", type=str, help="Dataset name (used as the key in the output accumulator dictionary)")
     parser.add_argument("-w", "--workers", type=int, default=4, help="Number of workers")
     parser.add_argument("-c", "--condor", action="store_true", help="Flag for running on condor (alters paths/logging/behaviors where necessary)")
-    parser.add_argument("--chunksize", type=int, default=500, help="Chunk size")
+    parser.add_argument("--chunksize", type=int, default=250, help="Chunk size")
     parser.add_argument("--maxchunks", type=int, default=None, help="Chunk size")
     args = parser.parse_args()
 
@@ -25,35 +33,46 @@ if __name__ == "__main__":
 
     if args.quicktest:
         args.force = True
-        args.dataset = "testdataset"
-        args.outputfile = f"test_{args.processor_name.replace('.', '_')}.coffea"
 
     # Input file handling
-    input_files = []
-    if args.inputfiles and args.inputfilestxt:
-        raise ValueError("Inconsistent arguments -i/--inputfiles and -I/--inputfilestxt")       
-    if args.inputfiles:
-        input_files = args.inputfiles.split(",")
-    elif args.inputfilestxt:
-        with open(args.inputfilestxt, "r") as f:
-            for line in f:
-                input_files.append(line.strip())
-    else:
-        raise ValueError("No input files specified (-i or -I)")
-    for input_file in input_files:
-        if input_file.startswith("/eos/cms/store"):
-            input_file = re.sub(r"^/eos/cms/store", r"root://eoscms.cern.ch//store", input_file)
-        elif input_file.startswith("/store"):
-            input_file = re.sub(r"^/store", r"root://eoscms.cern.ch//store", input_file)
+    fileset = {}
+    if args.inputfilesyaml:
+        if args.dataset:
+            raise RuntimeError("ERROR : Cannot specify --dataset/-d with --inputfilesyaml/-y, because the dataset naming comes from the .yaml file.")
 
-    fileset = {args.dataset: input_files}
+        with open(args.inputfilesyaml) as f:
+            doc = yaml.load(f)
+            for dataset, filelist in doc.items():
+                fileset[dataset] = filelist
+    else:
+        input_files = []
+        if args.inputfiles:
+            input_files = args.inputfiles.split(",")
+        elif args.inputfilestxt:
+            with open(args.inputfilestxt, "r") as f:
+                for line in f:
+                    input_files.append(line.strip())
+        fileset[args.dataset] = input_files
+
+    # Normalize file names
+    for k, v in fileset.items():
+        new_list = []
+        for input_file in v:
+            new_input_file = input_file
+            if new_input_file.startswith("/eos/cms/store"):
+                new_input_file = re.sub(r"^/eos/cms/store", r"root://eoscms.cern.ch//store", new_input_file)
+            elif new_input_file.startswith("/store"):
+                new_input_file = re.sub(r"^/store", r"root://eoscms.cern.ch//store", new_input_file)
+            new_list.append(new_input_file)
+        fileset[k] = new_list
+
+    # For quicktest, limit number of input files and events per job
     if args.quicktest:
-        # Limit number of input files and events per job
         for k, v in fileset.items():
             fileset[k] = v[:1]
-        maxchunks = 2 # do >=2 chunks to make sure output merging works
+        maxchunks = 8 # do >=2 chunks to make sure output merging works
     else:
-        maxchunks = None
+        maxchunks = args.maxchunks
 
     print("Input fileset:")
     pprint(fileset)
@@ -67,11 +86,11 @@ if __name__ == "__main__":
     output = processor.run_uproot_job(fileset,
                                 treename='Events',
                                 processor_instance=processor_class(),
-                                #executor=processor.futures_executor,
-                                executor=processor.iterative_executor,
+                                executor=processor.futures_executor,
+                                #executor=processor.iterative_executor,
                                 executor_args={'workers': args.workers, 'status': not args.condor, 'schema': processor.NanoAODSchema},
                                 chunksize=args.chunksize,
-                                maxchunks=args.maxchunks,
+                                maxchunks=maxchunks,
                             )
     ts_end = time.time()
     total_time = ts_end - ts_start
