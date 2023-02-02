@@ -31,6 +31,7 @@ setup(
           #"correctionlib>=2.0.0rc6",
           #"rhalphalib",
           "pandas",
+          "control>=0.9.3.post2",
     ],
     setup_requires=["flake8"] + pytest_runner,
     classifiers=[
