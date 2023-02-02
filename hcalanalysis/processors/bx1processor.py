@@ -72,7 +72,7 @@ class BX1Processor(processor.ProcessorABC):
         #print(events.__dict__)
         output = self.make_output()
         output['nevents'] = len(events)
-        print(f"nevents = {len(events)}")
+        #print(f"nevents = {len(events)}")
         
         # Repackage time slice arrays
         #print(events.HBDigis)
@@ -116,8 +116,8 @@ class BX1Processor(processor.ProcessorABC):
             # Bad event lists
             highq_events = events.event[(nhits > 400) & (eventq > 5.e4)]
             full_events = events.event[(nhits > 9000)]
-            output["bad_events"].extend(highq_events)
-            output["full_events"].extend(full_events)
+            output["bad_events"].extend(highq_events[:100])
+            output["full_events"].extend(full_events[:100])
         
         return processor.accumulate([{events.metadata["dataset"]: output}])
 

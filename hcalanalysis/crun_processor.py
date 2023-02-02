@@ -14,6 +14,8 @@ parser.add_argument("-d", "--dataset", type=str, help="Dataset name (only for -i
 parser.add_argument("-o", "--outputfile", type=str, required=True, help="Output file")
 parser.add_argument("-w", "--workers", type=int, default=4, help="Number of workers per job")
 parser.add_argument("--retar_venv", action="store_true", help="Retar venv (takes a while)")
+parser.add_argument("--chunksize", type=int, default=250, help="Chunk size")
+parser.add_argument("--maxchunks", type=int, default=None, help="Max chunks")
 args = parser.parse_args()
 
 # Input filehandling
@@ -80,6 +82,12 @@ for dataset in fileset.keys():
     this_nsubjobs = len(fileset[dataset])
 
     # Make run script (to be run on batch node)
+    processor_command = f"python run_processor.py {args.processor_name} -i ${{INPUT_FILES[$1]}} -d {dataset} -o {this_outputfile}.$1 -w {args.workers}"
+    if args.chunksize:
+        processor_command += f" --chunksize {args.chunksize}"
+    if args.maxchunks:
+        processor_command += f" --maxchunks {args.maxchunks}"
+
     with open(f"{submission_subdir}/run.sh", "w") as run_script:
         run_script.write(f"""
 #!/bin/bash
@@ -94,7 +102,7 @@ cd hcalanalysis
 echo 'Contents of ${{PWD}}:'
 ls -lrth
 INPUT_FILES=({" ".join(fileset[dataset])})
-python run_processor.py {args.processor_name} -i ${{INPUT_FILES[$1]}} -d {dataset} -o {this_outputfile}.$1 -w {args.workers}
+{processor_command}
 mv *coffea* $_CONDOR_SCRATCH_DIR/
 echo 'Done with run.sh'
 """)
@@ -103,7 +111,7 @@ echo 'Done with run.sh'
     files_to_transfer = [f"{tarball_dir}/usercode.tar.gz", f"{tarball_dir}/venv.tar.gz"]
 
     # Make condor command
-    csub_command = f"csub {submission_subdir}/run.sh -F {','.join(files_to_transfer)} -n {this_nsubjobs} -d {submission_subdir} --mem 6000 2>&1"
+    csub_command = f"csub {submission_subdir}/run.sh -F {','.join(files_to_transfer)} -n {this_nsubjobs} -d {submission_subdir} -t workday --mem 6000 2>&1"
     print(csub_command)
     with open(f"{submission_subdir}/csub_command.sh", "w") as csub_script:
         csub_script.write("#!/bin/bash\n")

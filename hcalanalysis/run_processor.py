@@ -26,7 +26,7 @@ if __name__ == "__main__":
     parser.add_argument("-w", "--workers", type=int, default=4, help="Number of workers")
     parser.add_argument("-c", "--condor", action="store_true", help="Flag for running on condor (alters paths/logging/behaviors where necessary)")
     parser.add_argument("--chunksize", type=int, default=250, help="Chunk size")
-    parser.add_argument("--maxchunks", type=int, default=None, help="Chunk size")
+    parser.add_argument("--maxchunks", type=int, default=None, help="Max chunks")
     args = parser.parse_args()
 
     processor_class = getattr(globals()[args.processor_name.split(".")[0]], args.processor_name.split(".")[1])
@@ -88,7 +88,7 @@ if __name__ == "__main__":
                                 processor_instance=processor_class(),
                                 executor=processor.futures_executor,
                                 #executor=processor.iterative_executor,
-                                executor_args={'workers': args.workers, 'status': not args.condor, 'schema': processor.NanoAODSchema},
+                                executor_args={'workers': args.workers, 'status': True, 'schema': processor.NanoAODSchema},
                                 chunksize=args.chunksize,
                                 maxchunks=maxchunks,
                             )

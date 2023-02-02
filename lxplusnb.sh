@@ -1,7 +1,7 @@
 #!/bin/bash
-if [ -z "$2" ]; then
+if [ -z "$1" ]; then
 	PORT=7778;
 else
-	PORT="$2";
+	PORT="$1";
 fi
-ssh -N -L localhost:${PORT}:localhost:${PORT} dryu@lxplus${1}.cern.ch
+ssh -L localhost:${PORT}:localhost:${PORT} dryu@lxplus.cern.ch "cd HCAL/hcalanalysis; echo 'Setting up env...'; source env.sh; echo 'Launching notebook...'; source notebookserver.sh ${PORT};"
