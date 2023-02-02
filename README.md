@@ -5,7 +5,7 @@ This package contains some examples for analyzing hcalnano files (https://github
 
 ### Setup
 ```
-git clone git@github.com:HCALPFG/hcalanalysis
+git clone git@github.com:DryRun/hcalanalysis
 cd hcalanalysis
 source firsttime.sh
 ```
