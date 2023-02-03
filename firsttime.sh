@@ -25,7 +25,7 @@ python -m pip install setuptools pip wheel --upgrade
 #python -m pip install setuptools pip --upgrade
 #python -m pip install coffea
 #python -m pip install xxhash
-pip install --editable . 
+python -m pip install --editable . --use-pep517
 
 # Make csub available anywhere
 cp hcaltools/csub venv/bin
