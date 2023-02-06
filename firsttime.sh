@@ -1,6 +1,6 @@
 #!/bin/bash
 #source /cvmfs/sft.cern.ch/lcg/views/LCG_99/x86_64-centos7-clang10-opt/setup.sh
-export LCG=/cvmfs/sft.cern.ch/lcg/views/LCG_100/x86_64-centos7-clang11-opt
+export LCG=/cvmfs/sft.cern.ch/lcg/views/LCG_102b/x86_64-centos7-clang12-opt/
 source ${LCG}/setup.sh
 
 python -m venv --copies venv
@@ -22,9 +22,8 @@ export HCALANALYSISDIR=$(pwd)
 
 # Install stuff
 python -m pip install setuptools pip wheel --upgrade
-#python -m pip install setuptools pip --upgrade
-#python -m pip install coffea
-#python -m pip install xxhash
+python -m pip install coffea
+python -m pip install importlib-resources==1.3.0
 python -m pip install --editable . --use-pep517
 
 # Make csub available anywhere
