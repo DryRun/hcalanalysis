@@ -16,7 +16,7 @@ pytest_runner = ["pytest-runner"] if needs_pytest else []
 setup(
     name='hcalanalysis',
     version = "0.0.0",
-    packages=[],
+    packages=find_packages(),
     description="A package for analyzing CMS HCAL digi/rechit data",
     long_description=open("README.md", "rb").read().decode("utf8", "ignore"),
     long_description_content_type="text/markdown",
