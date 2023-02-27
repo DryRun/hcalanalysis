@@ -24,14 +24,10 @@ python ../run_processor.py testprocessor.TestProcessor \
 In another terminal session, launch a notebook server:
 ```
 cd hcalanalysis
-source notebook.sh someNumberBiggerThan1024
+source lxplusnb.sh
 ```
 
-In a third terminal, create an SSH tunnel for the notebooks:
-```
-ssh -N -L localhost:someNumberBiggerThan1024:localhost:someNumberBiggerThan1024 username@lxplusN.cern.ch
-```
-where `lxplusN` is the lxplus node running the notebook server. In your browser, navigate to the URL specified by the notebook server. Open `hcalanalysis/example/Plots.ipynb`, and run the notebook.
+In your browser, navigate to the URL specified by the notebook server. Open `hcalanalysis/example/Plots.ipynb`, and run the notebook.
 
 ### Batch processing
 As usual, any significant processing should be done on condor. See `hcalanalysis/example/condor.sh` for an example. 
