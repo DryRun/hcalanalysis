@@ -4,4 +4,7 @@ if [ -z "$1" ]; then
 else
 	PORT="$1";
 fi
-ssh -L localhost:${PORT}:localhost:${PORT} dryu@lxplus.cern.ch "cd HCAL/hcalanalysis; echo 'Setting up env...'; source env.sh; echo 'Launching notebook...'; source notebookserver.sh ${PORT};"
+export PORT=7778
+export USERNAME=$USER # Edit me!
+export LXPLUSFOLDER=HCAL/hcalanalysis # Edit me!
+ssh -L localhost:${PORT}:localhost:${PORT} ${USERNAME}@lxplus.cern.ch "cd ${LXPLUSFOLDER}; echo 'Setting up env...'; source env.sh; echo 'Launching notebook...'; source notebookserver.sh ${PORT};"
