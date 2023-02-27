@@ -21,13 +21,18 @@ python ../run_processor.py testprocessor.TestProcessor \
 ```
 (Or you can just `source local.sh`.)
 
-In another terminal session, launch a notebook server:
+Next, we plot the histograms using a Jupyter notebook. We'll launch the Jupyter server on lxplus, and setup an SSH tunnel to lxplus so we can make the plots in a (local) browser window. This can be done in one SSH command:
+
 ```
-cd hcalanalysis
-source lxplusnb.sh
+export PORT=7778
+export USERNAME=dryu
+export LXPLUSFOLDER=HCAL/hcalanalysis
+ssh -L localhost:${PORT}:localhost:${PORT} ${USERNAME}@lxplus.cern.ch "cd ${LXPLUSFOLDER}; echo 'Setting up env...'; source env.sh; echo 'Launching notebook...'; source notebookserver.sh ${PORT};"
 ```
 
-In your browser, navigate to the URL specified by the notebook server. Open `hcalanalysis/example/Plots.ipynb`, and run the notebook.
+(These commands are provided in the script `lxplusnb.sh`, so you might want to checkout the repository on your local machine, and edit+run the script.)
+
+Once the Jupyter server is up and running, navigate to the URL specified in the terminal window. Open `hcalanalysis/example/Plots.ipynb`, and run the notebook.
 
 ### Batch processing
 As usual, any significant processing should be done on condor. See `hcalanalysis/example/condor.sh` for an example. 
