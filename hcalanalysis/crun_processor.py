@@ -1,3 +1,10 @@
+'''
+This script is a condor launcher for run_processor.py. Specifically, this script handles:
+   - Dividing input files into condor subjobs
+   - Creating usercode tarball for distribution to worker nodes
+   - Setting up the executable (i.e. wrapper script around run_processor.py) to be run on the worker nodes
+'''
+
 import os
 import sys
 import datetime
