@@ -1,8 +1,14 @@
+'''
+This is a generic launcher for processors, which should be defined in processors/xyz.py. 
+This script handles the instantiation of the processor and the handling of input/output files. 
+'''
+
 import os
 import sys
 import time
 import re
 import yaml
+import json
 from hcalanalysis.processors import *
 from pprint import pprint
 from coffea import processor, util
@@ -20,6 +26,7 @@ if __name__ == "__main__":
     input_group.add_argument("-i", "--inputfiles", type=str, help="List of input files (comma-separated)")
     input_group.add_argument("-I", "--inputfilestxt", type=str, help="")
     input_group.add_argument("-y", "--inputfilesyaml", type=str, help="")
+    input_group.add_argument("-j", "--inputfilesjson", type=str, help="")
     parser.add_argument("-o", "--outputfile", type=str, required=True, help="Output file")
     parser.add_argument("-f", "--force", action="store_true", help="Overwrite output file")
     parser.add_argument("-d", "--dataset", type=str, help="Dataset name (used as the key in the output accumulator dictionary)")
@@ -44,6 +51,11 @@ if __name__ == "__main__":
             doc = yaml.load(f)
             for dataset, filelist in doc.items():
                 fileset[dataset] = filelist
+    elif args.inputfilesjson:
+        if args.dataset:
+            raise RuntimeError("ERROR : Cannot specify --dataset/-d with --inputfilesjson/-j, because the dataset naming comes from the .json file.")
+        with open(args.inputfilesjson) as f:
+            fileset = json.load(f)
     else:
         input_files = []
         if args.inputfiles:
@@ -88,7 +100,7 @@ if __name__ == "__main__":
                                 processor_instance=processor_class(),
                                 executor=processor.futures_executor,
                                 #executor=processor.iterative_executor,
-                                executor_args={'workers': args.workers, 'status': True, 'schema': processor.NanoAODSchema},
+                                executor_args={'workers': args.workers, 'status': True, 'schema': processor.HcalNanoAODSchema},
                                 chunksize=args.chunksize,
                                 maxchunks=maxchunks,
                             )
