@@ -10,6 +10,7 @@ import re
 import yaml
 import json
 from hcalanalysis.processors import *
+from hcalanalysis.schemas import HcalNanoAODSchema
 from pprint import pprint
 from coffea import processor, util
 
@@ -100,7 +101,7 @@ if __name__ == "__main__":
                                 processor_instance=processor_class(),
                                 executor=processor.futures_executor,
                                 #executor=processor.iterative_executor,
-                                executor_args={'workers': args.workers, 'status': True, 'schema': processor.HcalNanoAODSchema},
+                                executor_args={'workers': args.workers, 'status': True, 'schema': HcalNanoAODSchema},
                                 chunksize=args.chunksize,
                                 maxchunks=maxchunks,
                             )
